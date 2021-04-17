@@ -10,7 +10,7 @@
 #'  treatment indicator, and `controls` can be any additional control variables. Do not
 #'  include the fixed effects in the formula. If using `.` notation must be of
 #'  the form y ~ D + . - FE1 - FE2
-#' @param dt a data.table containing the variables in the model.
+#' @param data a data.table containing the variables in the model.
 #' @param id_var character, the name of id variable for units.
 #' @param time_var character, the name of time variable.
 #' @param quietly logical, default = FALSE, if set to TRUE then bacon() does not
@@ -47,7 +47,7 @@
 #'
 #' @export
 bacon <- function(formula,
-  dt,
+  data,
   id_var,
   time_var,
   quietly = FALSE) {
@@ -56,9 +56,10 @@ bacon <- function(formula,
   pkgs <- c("tidyverse", "fixest", "data.table")
   suppressPackageStartupMessages(sapply(pkgs, require, character.only = TRUE))
   
+  dt <- copy(data)
+  
   # Evaluate formula in data environment
   formula <- formula(terms (formula, data = dt))
-  dt <- copy(dt)
   
   # Unpack variable names and rename variables
   vars <- unpack_variable_names(formula)
@@ -249,21 +250,21 @@ rename_vars <-
 #'  returned
 #'
 #' @noRd
-create_treatment_groups <- function(dt, control_vars, return_merged_df = FALSE) {
+create_treatment_groups <- function(data, control_vars, return_merged_df = FALSE) {
   message('start create_treatment_groups')
-  df_treat <- dt[treated == 1, c("id", "time"), with = FALSE]
+  df_treat <- data[treated == 1, c("id", "time"), with = FALSE]
   df_treat <- df_treat[, list(time = min(time)), by = id]
   setnames(df_treat, "time", "treat_time")
   message('df_treat created')
   
-  setkey(dt, id)
+  setkey(data, id)
   setkey(df_treat, id)
-  dt <- merge(dt, df_treat, all.x = TRUE)
-  dt[is.na(treat_time), treat_time := 99999]
+  data <- merge(data, df_treat, all.x = TRUE)
+  data[is.na(treat_time), treat_time := 99999]
   
   # Check for weakly increasing treatment
   inc <-
-    dt[(time >= treat_time & treated == 0) | 
+    data[(time >= treat_time & treated == 0) | 
         (time < treat_time & treated == 1)] %>% nrow()
   if (inc > 0) {
     stop("Treatment not weakly increasing with time")
@@ -275,8 +276,8 @@ create_treatment_groups <- function(dt, control_vars, return_merged_df = FALSE) 
   #   ifelse(data$time >= data$treat_time & data$treated == 1, 1,
   #     ifelse(data$time < data$treat_time & data$treated == 0,
   #       1, 0)))
-  ttimes <- unique(dt$treat_time)
-  min_time <- min(dt$time)
+  ttimes <- unique(data$treat_time)
+  min_time <- min(data$time)
   two_by_twos <- expand_grid(treated = ttimes, untreated = ttimes) %>% data.table()
   two_by_twos <- two_by_twos[treated != untreated][treated != 99999][treated != min_time]
   message('create two_by_twos')
@@ -307,7 +308,7 @@ create_treatment_groups <- function(dt, control_vars, return_merged_df = FALSE) 
   
   # Whether or not to return the merged data too.
   if (return_merged_df == TRUE) {
-    return_data <- list("two_by_twos" = two_by_twos, "dt" = dt)
+    return_data <- list("two_by_twos" = two_by_twos, "dt" = data)
   } else {
     return_data <- two_by_twos
   }

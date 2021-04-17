@@ -1,8 +1,8 @@
 rm(list = ls())
 
-require(data.table)
-require(fixest)
-require(tidyverse)
+# require(data.table)
+# require(fixest)
+# require(tidyverse)
 
 # formula = as.formula("incearn_ln ~ reform_math + x1 + x2")
 # data = mutate(bacondecomp::math_reform,
@@ -16,18 +16,21 @@ require(tidyverse)
 # _______________________________________________________________
 
 source("R/bacon.R")
-test_data <- data.table(bacondecomp::math_reform)
+test_data <- data.table::data.table(bacondecomp::math_reform)
 
 bacon(
   incearn_ln ~ reform_math,
-  dt = test_data,
+  data = test_data,
   id_var = "state",
   time_var = "class"
 )
 
 # _______________________________________________________________
 # installing package from gh:
-# devtools::install_github("darinchristensen/bacondecomp")
+devtools::install_github("darinchristensen/bacondecomp", force = TRUE)
+
+test_data <- data.table::data.table(bacondecomp::math_reform)
+
 bacondecomp::bacon(
   incearn_ln ~ reform_math,
   dt = test_data,
