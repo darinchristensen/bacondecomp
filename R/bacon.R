@@ -41,9 +41,9 @@
 #'                    time_var = "year")
 #'
 #' @import stats
-#' @import data.table
-#' @import fixest
 #' @import tidyverse
+#' @import fixest
+#' @import data.table
 #'
 #' @export
 bacon <- function(formula,

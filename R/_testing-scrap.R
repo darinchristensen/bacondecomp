@@ -16,16 +16,25 @@ require(tidyverse)
 # _______________________________________________________________
 
 source("R/bacon.R")
-
 test_data <- data.table(bacondecomp::math_reform)
-system.time(
-  bacon(
-    incearn_ln ~ reform_math,
-    dt = test_data,
-    id_var = "state",
-    time_var = "class"
-  )
+
+bacon(
+  incearn_ln ~ reform_math,
+  dt = test_data,
+  id_var = "state",
+  time_var = "class"
 )
+
+# _______________________________________________________________
+# installing package from gh:
+# devtools::install_github("darinchristensen/bacondecomp")
+bacondecomp::bacon(
+  incearn_ln ~ reform_math,
+  dt = test_data,
+  id_var = "state",
+  time_var = "class"
+)
+
 
 # profvis::profvis(
 #   bacondecomp::bacon(
