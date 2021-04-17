@@ -51,7 +51,10 @@ bacon <- function(formula,
   id_var,
   time_var,
   quietly = FALSE) {
-
+  
+  pkgs <- c("tidyverse", "fixest", "data.table")
+  suppressPackageStartupMessages(sapply(pkgs, require, character.only = TRUE))
+  
   # Evaluate formula in data environment
   formula <- formula(terms (formula, data = dt))
   dt <- copy(dt)
