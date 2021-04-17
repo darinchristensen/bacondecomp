@@ -15,7 +15,7 @@ require(tidyverse)
 ## ----
 # _______________________________________________________________
 
-source("R/bacon.R")
+# source("R/bacon.R")
 
 test_data <- data.table(bacondecomp::math_reform)
 system.time(
