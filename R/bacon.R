@@ -234,7 +234,7 @@ rename_vars <-
 
 #' Create Grid of Treatment Groups
 #'
-#' @param dt a data.table used to create groups - MUST obey naming convention
+#' @param data a data.table used to create groups - MUST obey naming convention
 #' used in `bacon()`. i.e. columns are ["id", "time", "outcome", "treated"]
 #'
 #' @param return_merged_df Defaults to `FALSE` whether to return merged data
@@ -252,6 +252,8 @@ rename_vars <-
 #' @noRd
 create_treatment_groups <- function(data, control_vars, return_merged_df = FALSE) {
   message('start create_treatment_groups')
+  print(head(data))
+  
   df_treat <- data[treated == 1, c("id", "time"), with = FALSE]
   df_treat <- df_treat[, list(time = min(time)), by = id]
   setnames(df_treat, "time", "treat_time")
