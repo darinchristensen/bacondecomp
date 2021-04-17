@@ -65,7 +65,11 @@ bacon <- function(formula,
   outcome_var <- vars$outcome_var
   treated_var <- vars$treated_var
   control_vars <- vars$control_vars
-  dt <- rename_vars(dt, id_var, time_var, outcome_var, treated_var)
+  setnames(
+    dt,
+    c(id_var, time_var, outcome_var, treated_var),
+    c("id", "time", "outcome", "treated")
+  )
   
   # Check for NA observations
   nas <- sum(is.na(dt[, c("id", "time", "outcome", "treated"), with = FALSE]))
