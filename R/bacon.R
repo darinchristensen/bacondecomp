@@ -252,7 +252,7 @@ rename_vars <-
 #' @noRd
 create_treatment_groups <- function(data, control_vars, return_merged_df = FALSE) {
   message('start create_treatment_groups')
-  print(head(data))
+  setDT(data)
   
   df_treat <- data[treated == 1, c("id", "time"), with = FALSE]
   df_treat <- df_treat[, list(time = min(time)), by = id]
