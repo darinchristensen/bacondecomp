@@ -71,6 +71,7 @@ bacon <- function(formula,
     c("id", "time", "outcome", "treated")
   )
   message("renamed vars")
+  print(head(dt))
   
   # Check for NA observations
   nas <- sum(is.na(dt[, c("id", "time", "outcome", "treated"), with = FALSE]))
@@ -251,69 +252,69 @@ rename_vars <-
 #'  returned
 #'
 #' @noRd
-create_treatment_groups <-
-  function(dt, control_vars, return_merged_df = FALSE) {
-    df_treat <- dt[treated == 1, c("id", "time"), with = FALSE]
-    df_treat <- df_treat[, list(time = min(time)), by = id]
-    setnames(df_treat, "time", "treat_time")
-    
-    setkey(dt, id)
-    setkey(df_treat, id)
-    dt <- merge(dt, df_treat, all.x = TRUE)
-    dt[is.na(treat_time), treat_time := 99999]
-    
-    # Check for weakly increasing treatment
-    inc <-
-      dt[(time >= treat_time &
-          treated == 0) | (time < treat_time & treated == 1)] %>% nrow()
-    if (inc > 0) {
-      stop("Treatment not weakly increasing with time")
-    }
-    rm(inc)
-    
-    # inc <- ifelse(data$treat_time == 99999, 1,
-    #   ifelse(data$time >= data$treat_time & data$treated == 1, 1,
-    #     ifelse(data$time < data$treat_time & data$treated == 0,
-    #       1, 0)))
-    ttimes <- unique(dt$treat_time)
-    min_time <- min(dt$time)
-    two_by_twos <-
-      expand_grid(treated = ttimes, untreated = ttimes) %>% data.table()
-    two_by_twos <-
-      two_by_twos[treated != untreated][treated != 99999][treated != min_time]
-    
-    if (length(control_vars) == 0) {
-      # Create data.frame of all posible 2x2 estimates. Dyads may appear twice as
-      # treatment groups can play the roll of both earlier and later treated
-      two_by_twos[, type := case_when(
-        untreated == 99999 ~ "Treated vs. Untreated",
-        untreated == min_time ~ "Later vs Always Treated",
-        treated > untreated ~ "Later vs. Earlier Treated",
-        TRUE ~ "Earlier vs. Later Treated"
-      )]
-      
-    } else if (length(control_vars) > 0) {
-      # In the controlled decomposition, each dyad only appears once because we
-      # do not make the distinction between earlier vs later treated
-      two_by_twos <-
-        two_by_twos[treated < untreated | untreated == 99999]
-      
-      two_by_twos[, type := case_when(
-        untreated == 99999 ~ "Treated vs. Untreated",
-        untreated == min_time |
-          treated == min_time ~ "Later vs Always Treated",
-        TRUE ~ "Both Treated"
-      )]
-    }
-    
-    # Whether or not to return the merged data too.
-    if (return_merged_df == TRUE) {
-      return_data <- list("two_by_twos" = two_by_twos, "dt" = dt)
-    } else {
-      return_data <- two_by_twos
-    }
-    return(return_data)
+create_treatment_groups <- function(dt, control_vars, return_merged_df = FALSE) {
+  
+  df_treat <- dt[treated == 1, c("id", "time"), with = FALSE]
+  df_treat <- df_treat[, list(time = min(time)), by = id]
+  setnames(df_treat, "time", "treat_time")
+  
+  setkey(dt, id)
+  setkey(df_treat, id)
+  dt <- merge(dt, df_treat, all.x = TRUE)
+  dt[is.na(treat_time), treat_time := 99999]
+  
+  # Check for weakly increasing treatment
+  inc <-
+    dt[(time >= treat_time &
+        treated == 0) | (time < treat_time & treated == 1)] %>% nrow()
+  if (inc > 0) {
+    stop("Treatment not weakly increasing with time")
   }
+  rm(inc)
+  
+  # inc <- ifelse(data$treat_time == 99999, 1,
+  #   ifelse(data$time >= data$treat_time & data$treated == 1, 1,
+  #     ifelse(data$time < data$treat_time & data$treated == 0,
+  #       1, 0)))
+  ttimes <- unique(dt$treat_time)
+  min_time <- min(dt$time)
+  two_by_twos <-
+    expand_grid(treated = ttimes, untreated = ttimes) %>% data.table()
+  two_by_twos <-
+    two_by_twos[treated != untreated][treated != 99999][treated != min_time]
+  
+  if (length(control_vars) == 0) {
+    # Create data.frame of all posible 2x2 estimates. Dyads may appear twice as
+    # treatment groups can play the roll of both earlier and later treated
+    two_by_twos[, type := case_when(
+      untreated == 99999 ~ "Treated vs. Untreated",
+      untreated == min_time ~ "Later vs Always Treated",
+      treated > untreated ~ "Later vs. Earlier Treated",
+      TRUE ~ "Earlier vs. Later Treated"
+    )]
+    
+  } else if (length(control_vars) > 0) {
+    # In the controlled decomposition, each dyad only appears once because we
+    # do not make the distinction between earlier vs later treated
+    two_by_twos <-
+      two_by_twos[treated < untreated | untreated == 99999]
+    
+    two_by_twos[, type := case_when(
+      untreated == 99999 ~ "Treated vs. Untreated",
+      untreated == min_time |
+        treated == min_time ~ "Later vs Always Treated",
+      TRUE ~ "Both Treated"
+    )]
+  }
+  
+  # Whether or not to return the merged data too.
+  if (return_merged_df == TRUE) {
+    return_data <- list("two_by_twos" = two_by_twos, "dt" = dt)
+  } else {
+    return_data <- two_by_twos
+  }
+  return(return_data)
+}
 
 
 #' Subset Data
