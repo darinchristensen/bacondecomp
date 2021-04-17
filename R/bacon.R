@@ -242,8 +242,8 @@ rename_vars <-
 #' @noRd
 create_treatment_groups <-
   function(dt, control_vars, return_merged_df = FALSE) {
-    df_treat <- dt[treated == 1, .(id, time)]
-    df_treat <- df_treat[, .(time = min(time)), by = id]
+    df_treat <- dt[treated == 1, c("id", "time"), with = FALSE]
+    df_treat <- df_treat[, list(time = min(time)), by = id]
     setnames(df_treat, "time", "treat_time")
     
     setkey(dt, id)
@@ -419,7 +419,7 @@ run_fwl <- function(data, control_formula) {
   
   data[, d_it_til := d_it - d_i_bar - d_t_bar + d_bar_bar]
   
-  data[, d_kt_bar := mean(d_it), by = .(treat_time, time)]
+  data[, d_kt_bar := mean(d_it), by = list(treat_time, time)]
   data[, d_k_bar := mean(d_it), by = treat_time]
   
   data[, d_ikt_til := d_it - d_i_bar - (d_kt_bar - d_k_bar)]
@@ -519,10 +519,10 @@ collapse_x_p <- function(data, control_vars) {
   # Group level Xs
   data[, str_c("g_", control_vars) := lapply(.SD, mean), 
     .SDcols = control_vars, 
-    by = .(treat_time, time)]
+    by = list(treat_time, time)]
   
   # Group level p
-  data[, g_p := mean(p), by = .(treat_time, time)]
+  data[, g_p := mean(p), by = list(treat_time, time)]
   
   g_control_formula <- str_c("g_", control_vars) %>%
     str_flatten(" + ") %>%
@@ -738,7 +738,7 @@ calc_controlled_beta_weights <- function(data, g_control_formula) {
 }
 
 print_summary <- function(two_by_twos, return_df = FALSE) {
-  sum_df <- two_by_twos[, .(weight = sum(weight),
+  sum_df <- two_by_twos[, list(weight = sum(weight),
     avg_est = weighted.mean(estimate, weight)),
     by = type]
   
