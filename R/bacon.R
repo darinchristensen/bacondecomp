@@ -70,8 +70,6 @@ bacon <- function(formula,
     c(id_var, time_var, outcome_var, treated_var),
     c("id", "time", "outcome", "treated")
   )
-  message("renamed vars")
-  print(head(dt))
   
   # Check for NA observations
   nas <- sum(is.na(dt[, c("id", "time", "outcome", "treated"), with = FALSE]))
@@ -86,7 +84,6 @@ bacon <- function(formula,
     stop("NA observations")
   }
   rm(nas)
-  message("checked for nas")
   
   # Create 2x2 grid of treatment groups
   treatment_group_calc <- create_treatment_groups(dt, control_vars, return_merged_df = TRUE)
@@ -253,10 +250,11 @@ rename_vars <-
 #'
 #' @noRd
 create_treatment_groups <- function(dt, control_vars, return_merged_df = FALSE) {
-  
+  message('start create_treatment_groups')
   df_treat <- dt[treated == 1, c("id", "time"), with = FALSE]
   df_treat <- df_treat[, list(time = min(time)), by = id]
   setnames(df_treat, "time", "treat_time")
+  message('df_treat created')
   
   setkey(dt, id)
   setkey(df_treat, id)
@@ -265,12 +263,13 @@ create_treatment_groups <- function(dt, control_vars, return_merged_df = FALSE) 
   
   # Check for weakly increasing treatment
   inc <-
-    dt[(time >= treat_time &
-        treated == 0) | (time < treat_time & treated == 1)] %>% nrow()
+    dt[(time >= treat_time & treated == 0) | 
+        (time < treat_time & treated == 1)] %>% nrow()
   if (inc > 0) {
     stop("Treatment not weakly increasing with time")
   }
   rm(inc)
+  message('check for weakly increasing treatment')
   
   # inc <- ifelse(data$treat_time == 99999, 1,
   #   ifelse(data$time >= data$treat_time & data$treated == 1, 1,
@@ -278,10 +277,9 @@ create_treatment_groups <- function(dt, control_vars, return_merged_df = FALSE) 
   #       1, 0)))
   ttimes <- unique(dt$treat_time)
   min_time <- min(dt$time)
-  two_by_twos <-
-    expand_grid(treated = ttimes, untreated = ttimes) %>% data.table()
-  two_by_twos <-
-    two_by_twos[treated != untreated][treated != 99999][treated != min_time]
+  two_by_twos <- expand_grid(treated = ttimes, untreated = ttimes) %>% data.table()
+  two_by_twos <- two_by_twos[treated != untreated][treated != 99999][treated != min_time]
+  message('create two_by_twos')
   
   if (length(control_vars) == 0) {
     # Create data.frame of all posible 2x2 estimates. Dyads may appear twice as
