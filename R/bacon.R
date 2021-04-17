@@ -52,6 +52,7 @@ bacon <- function(formula,
   time_var,
   quietly = FALSE) {
   
+  # loading required packages:
   pkgs <- c("tidyverse", "fixest", "data.table")
   suppressPackageStartupMessages(sapply(pkgs, require, character.only = TRUE))
   
