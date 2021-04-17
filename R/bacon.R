@@ -70,6 +70,7 @@ bacon <- function(formula,
     c(id_var, time_var, outcome_var, treated_var),
     c("id", "time", "outcome", "treated")
   )
+  message("renamed vars")
   
   # Check for NA observations
   nas <- sum(is.na(dt[, c("id", "time", "outcome", "treated"), with = FALSE]))
@@ -84,6 +85,7 @@ bacon <- function(formula,
     stop("NA observations")
   }
   rm(nas)
+  message("checked for nas")
   
   # Create 2x2 grid of treatment groups
   treatment_group_calc <- create_treatment_groups(dt, control_vars, return_merged_df = TRUE)
@@ -92,6 +94,7 @@ bacon <- function(formula,
   rm(treatment_group_calc)
   
   two_by_twos[, c("estimate", "weight") := NA_real_]
+  message("created two by twos")
   
   # _______________________________________________________________
   # Uncontrolled ----
