@@ -27,16 +27,16 @@ bacon(
 
 # _______________________________________________________________
 # installing package from gh:
-devtools::install_github("darinchristensen/bacondecomp", force = TRUE)
-
-test_data <- data.table::data.table(bacondecomp::math_reform)
-
-bacondecomp::bacon(
-  incearn_ln ~ reform_math,
-  dt = test_data,
-  id_var = "state",
-  time_var = "class"
-)
+# devtools::install_github("darinchristensen/bacondecomp", force = TRUE)
+# 
+# test_data <- data.table::data.table(bacondecomp::math_reform)
+# 
+# bacondecomp::bacon(
+#   incearn_ln ~ reform_math,
+#   data = test_data,
+#   id_var = "state",
+#   time_var = "class"
+# )
 
 
 # profvis::profvis(

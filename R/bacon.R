@@ -93,7 +93,6 @@ bacon <- function(formula,
   rm(treatment_group_calc)
   
   two_by_twos[, c("estimate", "weight") := NA_real_]
-  message("created two by twos")
   
   # _______________________________________________________________
   # Uncontrolled ----
@@ -109,7 +108,11 @@ bacon <- function(formula,
         untreated_group = two_by_twos$untreated[i]
       )
       
-      estimate <- feols(outcome ~ treated | time + id, data = data1)$coefficients
+      if(var(data1$outcome) == 0) {
+        estimate <- NA_real_
+      } else {
+        estimate <- feols(outcome ~ treated | time + id, data = data1)$coefficients
+      }
       
       two_by_twos$estimate[i] <- estimate
       two_by_twos$weight[i] <- weight
@@ -251,14 +254,9 @@ rename_vars <-
 #'
 #' @noRd
 create_treatment_groups <- function(data, control_vars, return_merged_df = FALSE) {
-  message('start create_treatment_groups')
-  setDT(data)
-  print(class(data))
-  
   df_treat <- data[treated == 1, c("id", "time"), with = FALSE]
   df_treat <- df_treat[, list(time = min(time)), by = id]
   setnames(df_treat, "time", "treat_time")
-  message('df_treat created')
   
   setkey(data, id)
   setkey(df_treat, id)
@@ -273,7 +271,6 @@ create_treatment_groups <- function(data, control_vars, return_merged_df = FALSE
     stop("Treatment not weakly increasing with time")
   }
   rm(inc)
-  message('check for weakly increasing treatment')
   
   # inc <- ifelse(data$treat_time == 99999, 1,
   #   ifelse(data$time >= data$treat_time & data$treated == 1, 1,
@@ -283,7 +280,6 @@ create_treatment_groups <- function(data, control_vars, return_merged_df = FALSE
   min_time <- min(data$time)
   two_by_twos <- expand_grid(treated = ttimes, untreated = ttimes) %>% data.table()
   two_by_twos <- two_by_twos[treated != untreated][treated != 99999][treated != min_time]
-  message('create two_by_twos')
   
   if (length(control_vars) == 0) {
     # Create data.frame of all posible 2x2 estimates. Dyads may appear twice as
@@ -656,8 +652,13 @@ calc_BD <- function(data, g_control_formula) {
   ) %>%
     as.formula()
   
-  fit_BD <- feols(BD_formula, data = data)
-  BD <- fit_BD$coefficients["treated"]
+  if(var(data$outcome) == 0) {
+    BD <- NA_real_
+  } else {
+    fit_BD <- feols(BD_formula, data = data)
+    BD <- fit_BD$coefficients["treated"]
+  }
+  
   return(BD)
 }
 
@@ -753,7 +754,7 @@ calc_controlled_beta_weights <- function(data, g_control_formula) {
 
 print_summary <- function(two_by_twos, return_df = FALSE) {
   sum_df <- two_by_twos[, list(weight = sum(weight),
-    avg_est = weighted.mean(estimate, weight)),
+    avg_est = weighted.mean(estimate, weight, na.rm = TRUE)),
     by = type]
   
   sum_df <- mutate_if(sum_df, is.numeric, round, 5)
